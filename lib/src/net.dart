@@ -10,7 +10,7 @@ class Query extends RqlQuery {
 
   Query(this._type, this._token, [this._term, this._globalOptargs]);
 
-  serialize() {
+  String serialize() {
     List res = [_type.value];
     if (_term != null) {
       res.add(_term.build());
@@ -82,16 +82,20 @@ class Connection {
   );
 
   // ignore: unnecessary_null_comparison
-  get isClosed => _socket == null;
+  bool get isClosed => _socket == null;
 
   void use(String db) {
     _db = db;
   }
 
-  Future server() {
+  Future? server() {
     // RqlQuery query =
-    RqlQuery query =
-        Query(p.Query_QueryType.SERVER_INFO, _getToken(), null, null);
+    RqlQuery query = Query(
+      p.Query_QueryType.SERVER_INFO,
+      _getToken(),
+      null,
+      null,
+    );
     _sendQueue.add(query);
     return _start(query);
   }
@@ -116,42 +120,47 @@ class Connection {
       sock = SecureSocket.connect(_host, _port, context: context);
     }
 
-    sock.then((socket) {
-      // ignore: unnecessary_null_comparison
-      if (socket != null) {
-        _socket = socket;
-        _socket!.listen(_handleResponse, onDone: () {
-          if (_listeners["close"] != null) {
-            for (var func in _listeners["close"]!) {
-              func();
-            }
+    sock
+        .then((socket) {
+          // ignore: unnecessary_null_comparison
+          if (socket != null) {
+            _socket = socket;
+            _socket!.listen(
+              _handleResponse,
+              onDone: () {
+                if (_listeners["close"] != null) {
+                  for (var func in _listeners["close"]!) {
+                    func();
+                  }
+                }
+              },
+            );
+
+            _clientFirstMessage = "n=$_user,r=${_makeSalt()}";
+            String message = json.encode({
+              'protocol_version': _protocolVersion,
+              'authentication_method': "SCRAM-SHA-256",
+              // ignore: unnecessary_brace_in_string_interps
+              'authentication': "n,,${_clientFirstMessage}",
+            });
+            List<int> handshake =
+                List.from(_toBytes(p.VersionDummy_Version.V1_0.value))
+                  ..addAll(message.codeUnits)
+                  ..add(0);
+
+            _socket!.add(handshake);
           }
+        })
+        .catchError((err) {
+          _completer.completeError(
+            RqlDriverError("Could not connect to $_host:$_port.  Error $err"),
+          );
         });
-
-        _clientFirstMessage = "n=$_user,r=${_makeSalt()}";
-        String message = json.encode({
-          'protocol_version': _protocolVersion,
-          'authentication_method': "SCRAM-SHA-256",
-          // ignore: unnecessary_brace_in_string_interps
-          'authentication': "n,,${_clientFirstMessage}"
-        });
-        List<int> handshake =
-            List.from(_toBytes(p.VersionDummy_Version.V1_0.value))
-              ..addAll(message.codeUnits)
-              ..add(0);
-
-        _socket!.add(handshake);
-      }
-    }).catchError((err) {
-      _completer.completeError(
-        RqlDriverError("Could not connect to $_host:$_port.  Error $err"),
-      );
-    });
 
     return _completer.future;
   }
 
-  _handleResponse(List<int> bytes) {
+  void _handleResponse(List<int> bytes) {
     if (!_completer.isCompleted) {
       _handleAuthResponse(bytes);
     } else {
@@ -159,7 +168,7 @@ class Connection {
     }
   }
 
-  _handleAuthResponse(List<int> res) {
+  void _handleAuthResponse(List<int> res) {
     List<int> response = [];
     for (final byte in res) {
       if (byte == 0) {
@@ -171,7 +180,7 @@ class Connection {
     }
   }
 
-  _handleAuthError(Exception error) {
+  void _handleAuthError(Exception error) {
     if (_listeners["error"] != null) {
       for (var func in _listeners["error"]!) {
         func(error);
@@ -180,7 +189,7 @@ class Connection {
     _completer.completeError(error);
   }
 
-  _doHandshake(List<int> response) {
+  void _doHandshake(List<int> response) {
     Map responseJSON = json.decode(utf8.decode(response));
 
     if (responseJSON.containsKey('success') && responseJSON['success']) {
@@ -190,8 +199,9 @@ class Connection {
         if (min > _protocolVersion || max < _protocolVersion) {
           //We don't actually support changing the protocol yet, so just error.
           _handleAuthError(
-              RqlDriverError("""Unsupported protocol version $_protocolVersion,
-                  expected between $min and $max."""));
+            RqlDriverError("""Unsupported protocol version $_protocolVersion,
+                  expected between $min and $max."""),
+          );
         }
       } else if (responseJSON.containsKey('authentication')) {
         String authString = responseJSON['authentication'];
@@ -213,30 +223,42 @@ class Connection {
 
           //PBKDF2NS gen = PBKDF2NS(hash: sha256);
           //List<int> saltedPassword = gen.generateKey(_password, salt, i, 32);
-          var saltedPassword =
-              hashlib.pbkdf2(_password.codeUnits, salt.codeUnits, i, 32);
+          var saltedPassword = hashlib.pbkdf2(
+            _password.codeUnits,
+            salt.codeUnits,
+            i,
+            32,
+          );
 
-          Digest clientKey = Hmac(sha256, saltedPassword.bytes)
-              .convert("Client Key".codeUnits);
+          Digest clientKey = Hmac(
+            sha256,
+            saltedPassword.bytes,
+          ).convert("Client Key".codeUnits);
           Digest storedKey = sha256.convert(clientKey.bytes);
 
           String authMessage =
               "$_clientFirstMessage,$authString,$clientFinalMessageWithoutProof";
 
-          Digest clientSignature =
-              Hmac(sha256, storedKey.bytes).convert(authMessage.codeUnits);
+          Digest clientSignature = Hmac(
+            sha256,
+            storedKey.bytes,
+          ).convert(authMessage.codeUnits);
 
           List<int> clientProof = _xOr(clientKey.bytes, clientSignature.bytes);
 
-          Digest serverKey = Hmac(sha256, saltedPassword.bytes)
-              .convert("Server Key".codeUnits);
+          Digest serverKey = Hmac(
+            sha256,
+            saltedPassword.bytes,
+          ).convert("Server Key".codeUnits);
 
-          _serverSignature =
-              Hmac(sha256, serverKey.bytes).convert(authMessage.codeUnits);
+          _serverSignature = Hmac(
+            sha256,
+            serverKey.bytes,
+          ).convert(authMessage.codeUnits);
 
           String message = json.encode({
             'authentication':
-                "$clientFinalMessageWithoutProof,p=${base64.encode(clientProof)}"
+                "$clientFinalMessageWithoutProof,p=${base64.encode(clientProof)}",
           });
 
           List<int> messageBytes = List.from(message.codeUnits)..add(0);
@@ -251,12 +273,15 @@ class Connection {
         }
       }
     } else {
-      _handleAuthError(RqlDriverError(
-          "Server dropped connection with message: ${responseJSON['error']}"));
+      _handleAuthError(
+        RqlDriverError(
+          "Server dropped connection with message: ${responseJSON['error']}",
+        ),
+      );
     }
   }
 
-  _handleQueryResponse(Response response) {
+  void _handleQueryResponse(Response response) {
     Query query = _replyQueries.remove(response._token);
 
     Exception? hasError = _checkErrorResponse(response, query._term);
@@ -302,8 +327,9 @@ class Connection {
       query._queryCompleter.complete(response._data.first);
     } else {
       if (!query._queryCompleter.isCompleted) {
-        query._queryCompleter
-            .completeError(RqlDriverError("Error: ${response._data}."));
+        query._queryCompleter.completeError(
+          RqlDriverError("Error: ${response._data}."),
+        );
       }
     }
 
@@ -349,28 +375,32 @@ class Connection {
     _listeners[key] = currentListeners;
   }
 
-  _getToken() {
+  int _getToken() {
     return ++_nextToken;
   }
 
-  clientPort() {
+  int clientPort() {
     return _socket!.port;
   }
 
-  clientAddress() {
+  String clientAddress() {
     return _socket!.address.address;
   }
 
-  noreplyWait() {
+  dynamic noreplyWait() {
     // RqlQuery query =
-    RqlQuery query =
-        Query(p.Query_QueryType.NOREPLY_WAIT, _getToken(), null, null);
+    RqlQuery query = Query(
+      p.Query_QueryType.NOREPLY_WAIT,
+      _getToken(),
+      null,
+      null,
+    );
 
     _sendQueue.add(query);
     return _start(query);
   }
 
-  _handleCursorResponse(Response response) {
+  void _handleCursorResponse(Response response) {
     Cursor cursor = _replyQueries[response._token]._cursor;
     cursor._extend(response);
     cursor._outstandingRequests--;
@@ -381,7 +411,7 @@ class Connection {
     }
   }
 
-  _readResponse(res) {
+  void _readResponse(dynamic res) {
     int responseToken;
     String responseBuf;
     int responseLen;
@@ -394,8 +424,9 @@ class Connection {
       responseToken = _fromBytes(_responseBuffer.sublist(0, 8));
       responseLen = _fromBytes(_responseBuffer.sublist(8, 12));
       if (_responseLength >= responseLen + 12) {
-        responseBuf =
-            utf8.decode(_responseBuffer.sublist(12, responseLen + 12));
+        responseBuf = utf8.decode(
+          _responseBuffer.sublist(12, responseLen + 12),
+        );
 
         _responseBuffer.removeRange(0, responseLen + 12);
         _responseLength = _responseBuffer.length;
@@ -420,7 +451,7 @@ class Connection {
     }
   }
 
-  _checkErrorResponse(Response response, RqlQuery? term) {
+  RqlError? _checkErrorResponse(Response response, RqlQuery? term) {
     dynamic message;
     dynamic frames;
     if (response._type == p.Response_ResponseType.RUNTIME_ERROR.value) {
@@ -458,14 +489,15 @@ class Connection {
     return null;
   }
 
-  _sendQuery() {
+  Future? _sendQuery() {
     if (_sendQueue.isNotEmpty) {
       Query query = _sendQueue.removeFirst();
 
       // Error if this connection has closed
       if (_socket == null) {
-        query._queryCompleter
-            .completeError(RqlDriverError("Connection is closed."));
+        query._queryCompleter.completeError(
+          RqlDriverError("Connection is closed."),
+        );
       } else {
         // Send json
         List<int> queryStr = utf8.encode(query.serialize());
@@ -478,9 +510,10 @@ class Connection {
         return query._queryCompleter.future;
       }
     }
+    return null;
   }
 
-  _start(RqlQuery term, [Map? globalOptargs]) {
+  Future? _start(RqlQuery term, [Map? globalOptargs]) {
     globalOptargs ??= {};
     if (globalOptargs.containsKey('db')) {
       globalOptargs['db'] = DB(globalOptargs['db']);
@@ -488,8 +521,12 @@ class Connection {
       globalOptargs['db'] = DB(_db);
     }
 
-    Query query =
-        Query(p.Query_QueryType.START, _getToken(), term, globalOptargs);
+    Query query = Query(
+      p.Query_QueryType.START,
+      _getToken(),
+      term,
+      globalOptargs,
+    );
     _sendQueue.addLast(query);
     return _sendQuery();
   }

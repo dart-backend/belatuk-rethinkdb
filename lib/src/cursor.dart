@@ -10,13 +10,15 @@ class Cursor extends Stream {
 
   Cursor(this._conn, this._query, this._opts);
 
-  _extend(Response response) {
+  void _extend(Response response) {
     _endFlag = response._type != p.Response_ResponseType.SUCCESS_PARTIAL.value;
 
     if (response._type != p.Response_ResponseType.SUCCESS_PARTIAL.value &&
         response._type != p.Response_ResponseType.SUCCESS_SEQUENCE.value) {
       _s.addError(
-          RqlDriverError("Unexpected response type received for cursor"), null);
+        RqlDriverError("Unexpected response type received for cursor"),
+        null,
+      );
     }
 
     try {
@@ -25,13 +27,19 @@ class Cursor extends Stream {
       _s.addError(e);
     }
 
-    var convertedData =
-        _query._recursivelyConvertPseudotypes(response._data, _opts);
-    _s.addStream(Stream.fromIterable(convertedData)).then((f) {
+    var convertedData = _query._recursivelyConvertPseudotypes(
+      response._data,
+      _opts,
+    );
+    _s.addStream(Stream.fromIterable(convertedData as Iterable)).then((f) {
       if (!_endFlag) {
         _outstandingRequests++;
-        Query query =
-            Query(p.Query_QueryType.CONTINUE, _query._token, null, null);
+        Query query = Query(
+          p.Query_QueryType.CONTINUE,
+          _query._token,
+          null,
+          null,
+        );
         query._cursor = this;
         _conn._sendQueue.addLast(query);
         _conn._sendQuery();
@@ -44,10 +52,18 @@ class Cursor extends Stream {
   Future close() => _s.close();
 
   @override
-  StreamSubscription listen(Function(dynamic)? onData,
-      {Function? onError, Function()? onDone, bool? cancelOnError}) {
-    return _s.stream.listen(onData,
-        onError: onError, onDone: onDone, cancelOnError: cancelOnError);
+  StreamSubscription listen(
+    Function(dynamic)? onData, {
+    Function? onError,
+    Function()? onDone,
+    bool? cancelOnError,
+  }) {
+    return _s.stream.listen(
+      onData,
+      onError: onError,
+      onDone: onDone,
+      cancelOnError: cancelOnError,
+    );
   }
 }
 

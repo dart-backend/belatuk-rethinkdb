@@ -1,42 +1,42 @@
 import 'package:belatuk_rethinkdb/belatuk_rethinkdb.dart';
 import 'package:test/test.dart';
 
-main() {
+void main() {
   RethinkDb r = RethinkDb();
   String? databaseName;
   String? tableName;
   String? testDbName;
   bool shouldDropTable = false;
-  Connection? connection;
+  late Connection connection;
 
   setUp(() async {
     connection = await r.connect();
 
     if (testDbName == null) {
-      String useDb = await r.uuid().run(connection!);
+      String useDb = await r.uuid().run(connection);
       testDbName = 'unit_test_db${useDb.replaceAll("-", "")}';
-      await r.dbCreate(testDbName!).run(connection!);
+      await r.dbCreate(testDbName!).run(connection);
     }
 
     if (databaseName == null) {
-      String dbName = await r.uuid().run(connection!);
+      String dbName = await r.uuid().run(connection);
       databaseName = "test_database_${dbName.replaceAll("-", "")}";
     }
 
     if (tableName == null) {
-      String tblName = await r.uuid().run(connection!);
+      String tblName = await r.uuid().run(connection);
       tableName = "test_table_${tblName.replaceAll("-", "")}";
     }
-    connection!.use(testDbName!);
+    connection.use(testDbName!);
   });
 
   tearDown(() async {
     if (shouldDropTable) {
       shouldDropTable = false;
-      await r.tableDrop(tableName!).run(connection!);
-      connection!.close();
+      await r.tableDrop(tableName!).run(connection);
+      connection.close();
     } else {
-      connection!.close();
+      connection.close();
     }
   });
 
@@ -52,16 +52,16 @@ main() {
     });
 
     test("should count items in a table", () async {
-      await r.tableCreate(tableName!).run(connection!);
+      await r.tableCreate(tableName!).run(connection);
       List testData = [
         {"id": 1},
         {"id": 2},
         {"id": 3},
         {"id": 4},
-        {"id": 5}
+        {"id": 5},
       ];
-      await r.table(tableName!).insert(testData).run(connection!);
-      int count = await r.table(tableName!).count().run(connection!);
+      await r.table(tableName!).insert(testData).run(connection);
+      int count = await r.table(tableName!).count().run(connection);
       expect(count, equals(5));
     });
 
@@ -71,21 +71,24 @@ main() {
         {"id": 7, "age": 22},
         {"id": 8, "age": 21},
         {"id": 9, "age": 33},
-        {"id": 10, "age": 34}
+        {"id": 10, "age": 34},
       ];
-      await r.table(tableName!).insert(testData).run(connection!);
+      await r.table(tableName!).insert(testData).run(connection);
       int count = await r.table(tableName!)('age').count(21).run(connection);
       expect(count, equals(2));
 
-      count = await r.table(tableName!).count((user) {
-        return user('id').lt(8);
-      }).run(connection!);
+      count = await r
+          .table(tableName!)
+          .count((user) {
+            return user('id').lt(8);
+          })
+          .run(connection);
 
       expect(count, equals(7));
     });
 
     test("remove the test database", () async {
-      Map response = await r.dbDrop(testDbName!).run(connection!);
+      Map response = await r.dbDrop(testDbName!).run(connection);
 
       expect(response.containsKey('config_changes'), equals(true));
       expect(response['dbs_dropped'], equals(1));
