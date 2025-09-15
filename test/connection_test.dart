@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:belatuk_rethinkdb/belatuk_rethinkdb.dart';
 import 'package:test/test.dart';
 
-main() {
+void main() {
   RethinkDb r = RethinkDb();
 
   test("connect() connects with defaults if no params are passed", () async {
@@ -14,11 +14,12 @@ main() {
 
   test("connect() connects with non-default if params are passed", () async {
     Connection conn = await r.connect(
-        db: 'testDB',
-        host: "localhost",
-        port: 28015,
-        user: "admin",
-        password: "");
+      db: 'testDB',
+      host: "localhost",
+      port: 28015,
+      user: "admin",
+      password: "",
+    );
 
     expect(conn, isNot(null));
     conn.close();

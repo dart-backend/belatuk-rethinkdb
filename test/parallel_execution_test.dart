@@ -5,7 +5,7 @@ import 'package:test/test.dart';
 
 String? testDbName;
 
-main() {
+void main() {
   setUp(() async {
     final r = RethinkDb();
     final conn = await r.connect();
@@ -39,7 +39,7 @@ Future<bool> pEx() {
       .then((connection) => _queryWhileWriting(connection, r));
 }
 
-Future<bool> _queryWhileWriting(conn, r) async {
+Future<bool> _queryWhileWriting(Connection conn, RethinkDb r) async {
   //variable that will be set by our faster query
   int? total;
 
@@ -60,18 +60,24 @@ Future<bool> _queryWhileWriting(conn, r) async {
     bigJson.add({'id': i, 'name': 'a$i'});
   }
 
-  r.table("bigTable").insert(bigJson).run(conn).then((d) {
-    //remove test tables after test complete
-    return r.tableDrop("bigTable").run(conn);
-  }).then((_) {
-    return r.tableDrop("emptyTable").run(conn);
-  }).then((_) {
-    conn.close();
-    return testCompleter.complete(total != null);
-  });
+  r
+      .table("bigTable")
+      .insert(bigJson)
+      .run(conn)
+      ?.then((d) {
+        //remove test tables after test complete
+        return r.tableDrop("bigTable").run(conn);
+      })
+      .then((_) {
+        return r.tableDrop("emptyTable").run(conn);
+      })
+      .then((_) {
+        conn.close();
+        return testCompleter.complete(total != null);
+      });
 
   //run another query while the insert is running
-  r.table("emptyTable").count().run(conn).then((t) {
+  r.table("emptyTable").count().run(conn)?.then((t) {
     total = t;
   });
 

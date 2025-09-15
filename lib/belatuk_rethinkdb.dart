@@ -21,7 +21,7 @@ class AddFunction {
 
   AddFunction([this._rqlQuery]);
 
-  Add call(obj) {
+  Add call(dynamic obj) {
     if (_rqlQuery != null) {
       return Add([_rqlQuery, obj]);
     } else if (obj is Args) {
@@ -48,7 +48,7 @@ class AndFunction {
 
   AndFunction([this._rqlQuery]);
 
-  And call(obj) {
+  And call(dynamic obj) {
     if (_rqlQuery != null) {
       return And([_rqlQuery, obj]);
     } else {
@@ -70,7 +70,7 @@ class AndFunction {
 /// If the test expression returns false or null, the [falseBranch] will be executed.
 /// In the other cases, the [trueBranch] is the one that will be evaluated.
 class BranchFunction {
-  Branch call(test, [trueBranch, falseBranch]) {
+  Branch call(dynamic test, [dynamic trueBranch, dynamic falseBranch]) {
     return Branch(test, trueBranch, falseBranch);
   }
 
@@ -85,7 +85,7 @@ class DivFunction {
 
   DivFunction([this._rqlQuery]);
 
-  Div call(number) {
+  Div call(dynamic number) {
     if (_rqlQuery != null) {
       return Div([_rqlQuery, number]);
     } else if (number is Args) {
@@ -111,7 +111,7 @@ class EqFunction {
 
   EqFunction([this._rqlQuery]);
 
-  Eq call(value) {
+  Eq call(dynamic value) {
     if (_rqlQuery != null) {
       return Eq([_rqlQuery, value]);
     } else if (value is Args) {
@@ -137,7 +137,7 @@ class GeFunction {
 
   GeFunction([this._rqlQuery]);
 
-  Ge call(number) {
+  Ge call(dynamic number) {
     if (_rqlQuery != null) {
       return Ge([_rqlQuery, number]);
     } else if (number is Args) {
@@ -163,7 +163,7 @@ class GtFunction {
 
   GtFunction([this._rqlQuery]);
 
-  Gt call(number) {
+  Gt call(dynamic number) {
     if (_rqlQuery != null) {
       return Gt([_rqlQuery, number]);
     } else if (number is Args) {
@@ -189,7 +189,7 @@ class LeFunction {
 
   LeFunction([this._rqlQuery]);
 
-  Le call(number) {
+  Le call(dynamic number) {
     if (_rqlQuery != null) {
       return Le([_rqlQuery, number]);
     } else if (number is Args) {
@@ -212,7 +212,7 @@ class LeFunction {
 
 /// Construct a geometric line
 class LineFunction {
-  Line call(point1, point2) {
+  Line call(dynamic point1, dynamic point2) {
     return Line([point1, point2]);
   }
 
@@ -227,7 +227,7 @@ class LtFunction {
 
   LtFunction([this._rqlQuery]);
 
-  Lt call(number) {
+  Lt call(dynamic number) {
     if (_rqlQuery != null) {
       return Lt([_rqlQuery, number]);
     } else if (number is Args) {
@@ -252,7 +252,7 @@ class LtFunction {
 /// and returns the transformed array. multiple sequences and arrays
 /// may be passed
 class MapFunction {
-  RqlMap call(seq, mappingFunction) {
+  RqlMap call(dynamic seq, mappingFunction) {
     return RqlMap([seq], mappingFunction);
   }
 
@@ -268,7 +268,7 @@ class MulFunction {
 
   MulFunction([this._rqlQuery]);
 
-  Mul call(number) {
+  Mul call(dynamic number) {
     if (_rqlQuery != null) {
       return Mul([_rqlQuery, number]);
     } else if (number is Args) {
@@ -294,7 +294,7 @@ class NeFunction {
 
   NeFunction([this._rqlQuery]);
 
-  Ne call(value) {
+  Ne call(dynamic value) {
     if (_rqlQuery != null) {
       return Ne([_rqlQuery, value]);
     } else if (value is Args) {
@@ -321,7 +321,7 @@ class ObjectFunction {
 
   ObjectFunction(this._rethinkdb);
 
-  RqlObject call(args) {
+  RqlObject call(dynamic args) {
     return RqlObject(args);
   }
 
@@ -337,7 +337,7 @@ class OrFunction {
 
   OrFunction([this._rqlQuery]);
 
-  Or call(number) {
+  Or call(dynamic number) {
     if (_rqlQuery != null) {
       return Or([_rqlQuery, number]);
     } else {
@@ -358,7 +358,7 @@ class OrFunction {
 
 /// Construct a geometric polygon
 class PolygonFunction {
-  Polygon call(point1, point2, point3) {
+  Polygon call(dynamic point1, dynamic point2, dynamic point3) {
     return Polygon([point1, point2, point3]);
   }
 
@@ -375,7 +375,7 @@ class RqlDoFunction {
 
   RqlDoFunction(this._rethinkdb);
 
-  FunCall call(arg, [expr]) {
+  FunCall call(dynamic arg, [dynamic expr]) {
     return FunCall(arg, expr);
   }
 
@@ -391,7 +391,7 @@ class SubFunction {
 
   SubFunction([this._rqlQuery]);
 
-  Sub call(number) {
+  Sub call(dynamic number) {
     if (_rqlQuery != null) {
       return Sub([_rqlQuery, number]);
     } else if (number is Args) {
@@ -413,7 +413,7 @@ class SubFunction {
 }
 
 class RethinkDb {
-// Connection Management
+  // Connection Management
   /// Create a new connection to the database server. Accepts the following options:
   /// host: the host to connect to (default localhost).
   /// port: the port to connect on (default 28015).
@@ -427,8 +427,7 @@ class RethinkDb {
     String user = "admin",
     String password = "",
     Map? ssl,
-  }) =>
-      Connection(db, host, port, user, password, ssl).reconnect();
+  }) => Connection(db, host, port, user, password, ssl).reconnect();
 
   /// Reference a database.This command can be chained with other commands to do further processing on the data.
   DB db(String dbName) => DB(dbName);
@@ -448,7 +447,7 @@ class RethinkDb {
 
   /// Returns a rang bewteen the start and end values. If no start or
   /// end are specified, an 'infinite' stream will be returned.
-  Range range([start, end]) {
+  Range range([dynamic start, dynamic end]) {
     if (start == null) {
       return Range.asStream();
     } else if (end == null) {
@@ -481,8 +480,15 @@ class RethinkDb {
   Desc desc(String attr) => Desc(attr);
 
   /// Create a time object for a specific time.
-  Time time(int year, int month, int day,
-      {String timezone = 'Z', int? hour, int? minute, num? second}) {
+  Time time(
+    int year,
+    int month,
+    int day, {
+    String timezone = 'Z',
+    int? hour,
+    int? minute,
+    num? second,
+  }) {
     if (second != null) {
       return Time(Args([year, month, day, hour, minute, second, timezone]));
     } else {
@@ -519,13 +525,13 @@ class RethinkDb {
   dynamic get branch => BranchFunction();
 
   /// Throw a runtime error. If called with no arguments inside the second argument to default, re-throw the current error.
-  UserError error(String message) => UserError(message, {});
+  UserError error(dynamic message) => UserError(message, {});
 
   /// Create a javascript expression.
-  JavaScript js(String js, [Map? options]) => JavaScript(js, options);
+  JavaScript js(dynamic js, [Map? options]) => JavaScript(js, options);
 
   /// Parse a JSON string on the server.
-  Json json(String json) => Json(json, {});
+  Json json(dynamic json) => Json(json, {});
 
   /// Count the total size of the group.
   Map count = {"COUNT": true};
@@ -544,13 +550,13 @@ class RethinkDb {
   dynamic get object => ObjectFunction(this);
 
   /// Acts like the ruby splat operator; unpacks a list of arguments.
-  Args args(args) => Args(args);
+  Args args(List args) => Args(args);
 
   /// Returns data from a specified http url
-  Http http(url, [optargs]) => Http(url, optargs);
+  Http http(List url, [optargs]) => Http(url, optargs);
 
   /// Generates a random number between two bounds
-  Random random([left, right, options]) {
+  Random random([int? left, int? right, options]) {
     if (right != null) {
       return Random.rightBound(left, right, options);
     } else if (left != null) {
@@ -561,7 +567,7 @@ class RethinkDb {
   }
 
   /// Returns logical inverse of the arguments given
-  Not not([value]) => Not(value ?? true);
+  Not not([dynamic value]) => Not(value ?? true);
 
   /// Executes the mappingFunction for each item in a sequence or array
   /// and returns the transformed array. multiple sequences and arrays
@@ -575,21 +581,21 @@ class RethinkDb {
   dynamic get or => OrFunction();
 
   /// Replace an object in a field instead of merging it with an existing object in a [merge] or [update] operation.
-  Literal literal(args) => Literal(args);
+  Literal literal(dynamic args) => Literal(args);
 
   /// Convert native dart object into a RqlObject
-  expr(val) => RqlQuery()._expr(val);
+  dynamic expr(dynamic val) => RqlQuery()._expr(val);
 
   /// Convert a GeoJSON object to a ReQL geometry object.
   GeoJson geojson(Map geoJson) => GeoJson(geoJson);
 
   /// Construct a circular line or polygon.
-  Circle circle(point, num radius, [Map? options]) =>
+  Circle circle(dynamic point, int radius, [Map? options]) =>
       Circle(point, radius, options);
 
   /// Compute the distance between a point and a geometry object
 
-  Distance distance(geo1, geo2, [Map? options]) =>
+  Distance distance(Point geo1, Circle geo2, [Map? options]) =>
       Distance(geo1, geo2, options);
 
   /// Construct a geometric line
@@ -622,7 +628,7 @@ class RethinkDb {
   dynamic get div => DivFunction();
 
   /// Encapsulate binary data within a query.
-  Binary binary(var data) => Binary(data);
+  Binary binary(dynamic data) => Binary(data);
 
   RqlTimeName monday = RqlTimeName(p.Term_TermType.MONDAY);
   RqlTimeName tuesday = RqlTimeName(p.Term_TermType.TUESDAY);
@@ -648,5 +654,5 @@ class RethinkDb {
   RqlConstant minval = RqlConstant(p.Term_TermType.MINVAL);
   RqlConstant maxval = RqlConstant(p.Term_TermType.MAXVAL);
 
-  Uuid uuid([str]) => Uuid(str);
+  Uuid uuid([String? str]) => Uuid(str);
 }
