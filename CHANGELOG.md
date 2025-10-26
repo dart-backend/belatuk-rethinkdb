@@ -1,9 +1,14 @@
 # Change Log
 
+## 1.3.0
+
+* Require dart >= 3.9.0
+* Upgraded `protobuf` to 5.0.0
+
 ## 1.2.0
 
 * Require dart >= 3.8.0
-* Updated to `lints` 6.0.0
+* Updated `lints` to 6.0.0
 * Updated dependencies
 * Updated README
 * Fixed linter warnings
@@ -11,7 +16,7 @@
 ## 1.1.0
 
 * Require dart >= 3.5.0
-* Updated to `lints` 5.0.0
+* Updated `lints` to 5.0.0
 * Updated dependencies
 * Updated README
 * Fixed linter warnings

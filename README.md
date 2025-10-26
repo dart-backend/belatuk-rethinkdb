@@ -4,18 +4,13 @@ A dart driver for connecting to RethinkDB, the open-source database for the real
 
 ## Getting Started
 
+### Prerequisites
+
+* Start `rethinkDB` as a container service. Refer to [Running rethinkDB](doc/deployment/README.md)
+
 ### Installation
 
-* Start `rethinkDB` as a container service. Refer to [Running rethinkDB](doc/README.md)
-
-* Install from [Pub](https://pub.dev/)
-
-```bash
-dart pub add belatuk_rethinkdb
-
-```
-
-* Or add to the `pubspec.yaml` file
+* Add to the `pubspec.yaml` file
 
 ```yaml
 dependencies:

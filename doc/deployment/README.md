@@ -1,8 +1,8 @@
 # Running RethinkDb in container
 
-Use the following command to run rethinkDb as services using the provided docker compose file.
+Use one of the following container engine to run the provided compose file to run `rethinkDB`.
 
-## Installation with Podman
+## Podman
 
 * Starting the rethinkDB container
 
@@ -20,10 +20,10 @@ Use the following command to run rethinkDb as services using the provided docker
 * Checking the rethinkDB container log
 
     ```bash
-    podman logs -f rethink-rethinkdb-1
+    podman logs -f rethink_rethinkdb_1
     ```
 
-## Installation with Rancher
+## Rancher
 
 * Starting the rethinkDB container
 
@@ -44,7 +44,7 @@ Use the following command to run rethinkDb as services using the provided docker
     nerdctl logs rethink-rethinkdb-1 -f
     ```
 
-## Installation with Docker
+## Docker
 
 * Starting the rethinkDB container
 
@@ -64,4 +64,3 @@ Use the following command to run rethinkDb as services using the provided docker
     ```bash
     docker logs rethink-rethinkdb-1 -f
     ```
-
